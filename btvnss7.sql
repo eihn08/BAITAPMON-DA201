@@ -121,15 +121,19 @@ FROM mon_an
 ORDER BY gia_tien ASC
 LIMIT 3; 
 -- khá 5
-CREATE TABLE don_hang (
-    id_don_hang INT PRIMARY KEY,
-    id_khach_hang INT,
-    danh_muc VARCHAR(100),
-    tong_tien INT,
-    ngay_dat DATE,
-    trang_thai VARCHAR(50)
+-- Tạo CSDL
+create database don_hang_db;
+use don_hang_db;
+-- Tạo bảng don_hang 
+Create table don_hang (
+id_don_hang INT PRIMARY KEY,
+id_khach_hang INT,
+danh_muc VARCHAR(100),
+tong_tien INT,
+ngay_dat DATE,
+trang_thai VARCHAR(50) -- 'Hoan thanh', 'Da huy'
 );
-INSERT INTO don_hang (id_don_hang, id_khach_hang, danh_muc, tong_tien, ngay_dat, trang_thai) VALUES
+insert into don_hang (id_don_hang, id_khach_hang, danh_muc, tong_tien, ngay_dat, trang_thai) values
 (1, 101, 'Dien tu', 15000000, '2023-01-15', 'Hoan thanh'),
 (2, 102, 'Thoi trang', 2500000, '2023-01-20', 'Hoan thanh'),
 (3, 101, 'Dien tu', 8000000, '2023-02-10', 'Hoan thanh'),
@@ -139,21 +143,60 @@ INSERT INTO don_hang (id_don_hang, id_khach_hang, danh_muc, tong_tien, ngay_dat,
 (7, 104, 'Dien tu', 22000000, '2023-04-18', 'Hoan thanh'),
 (8, 103, 'Thoi trang', 1800000, '2023-04-22', 'Hoan thanh'),
 (9, 102, 'Dien tu', 12000000, '2022-12-10', 'Hoan thanh');
-SELECT 
-    id_khach_hang,
-    SUM(tong_tien) AS tong_chi_tieu
+ -- 1. Thống kê tổng số tiền chi tiêu cho mỗi khách hàng. Hiển thị id_khach_hang và tổng số tiền của họ, đặt tên cột tổng tiền là tong_chi_tieu. Sắp xếp kết quả theo tổng chi tiêu giảm dần.
+SELECT id_khach_hang, SUM(tong_tien) AS 'tong_chi_tieu'
 FROM don_hang
 GROUP BY id_khach_hang
 ORDER BY tong_chi_tieu DESC;
-SELECT 
-    danh_muc,
-    COUNT(*) AS so_luong_don
-FROM don_hang
-GROUP BY danh_muc
-ORDER BY so_luong_don DESC;
-SELECT 
-    id_khach_hang
-FROM don_hang
-GROUP BY id_khach_hang
-HAVING COUNT(*) > 1;
--- khá 6 
+-- 2. Đếm số lượng đơn hàng theo từng danh mục sản phẩm. Hiển thị danh_muc và số lượng đơn hàng tương ứng, đặt tên cột số lượng là so_luong_don.
+select danh_muc, count(id_don_hang) as 'so_luong_don'
+from don_hang 
+group by danh_muc;
+-- 3. Tìm những khách hàng đã đặt nhiều hơn 1 đơn hàng. Chỉ hiển thị id_khach_hang của những khách hàng này.
+select id_don_hang, count(id_don_hang)
+from don_hang 
+group by id_khach_hang
+having count(id_don_hang) > 1;
+-- 4. Liệt kê các danh mục có tổng doanh thu (chỉ tính các đơn 'Hoan thanh') lớn hơn 10,000,000. Hiển thị danh_muc và tong_doanh_thu.
+select danh_muc, sum(tong_tien) as 'tong_doanh_thu'
+from don_hang 
+where trang_thai like 'Hoan thanh'
+group by danh_muc
+having tong_doanh_thu > 10000000;
+-- khá 6
+-- Tạo CSDL
+create database nhat_ky_nguoi_dung_db;
+use nhat_ky_nguoi_dung_db;
+CREATE TABLE nhat_ky_nguoi_dung (
+    id_nhat_ky INT PRIMARY KEY,
+    id_nguoi_dung INT,
+    id_bai_viet INT,
+    chuyen_muc VARCHAR(100),
+    thoi_gian_doc_giay INT,
+    ngay_ghi_nhat_ky DATE
+);
+INSERT INTO nhat_ky_nguoi_dung (id_nhat_ky, id_nguoi_dung, id_bai_viet, chuyen_muc, thoi_gian_doc_giay, ngay_ghi_nhat_ky) VALUES
+(1, 1, 101, 'Lap trinh', 300, '2023-10-01'),
+(2, 2, 102, 'Thiet ke', 180, '2023-10-01'),
+(3, 1, 103, 'Lap trinh', 450, '2023-10-02'),
+(4, 3, 104, 'Bao mat', 600, '2023-10-03'),
+(5, 2, 101, 'Lap trinh', 240, '2023-10-03'),
+(6, 1, 104, 'Bao mat', 500, '2023-10-04'),
+(7, 4, 102, 'Thiet ke', 120, '2023-10-04'),
+(8, 3, 101, 'Lap trinh', 320, '2023-10-05'),
+(9, 2, 105, 'Thiet ke', 200, '2023-10-05');
+SELECT id_nguoi_dung, SUM(thoi_gian_doc_giay) AS tong_thoi_gian_doc
+FROM nhat_ky_nguoi_dung
+GROUP BY id_nguoi_dung
+ORDER BY tong_thoi_gian_doc DESC;
+SELECT chuyen_muc, COUNT(id_nhat_ky) AS so_luot_doc
+FROM nhat_ky_nguoi_dung
+GROUP BY chuyen_muc;
+SELECT id_bai_viet
+FROM nhat_ky_nguoi_dung
+GROUP BY id_bai_viet
+HAVING COUNT(id_nguoi_dung) > 1;
+SELECT id_nguoi_dung, AVG(thoi_gian_doc_giay) AS thoi_gian_trung_binh
+FROM nhat_ky_nguoi_dung
+GROUP BY id_nguoi_dung
+HAVING AVG(thoi_gian_doc_giay) > 350;
